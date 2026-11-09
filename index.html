@@ -1,0 +1,1104 @@
+<!-- Birim Küp Öğretmen Paneli · sürüm 2: serbest tahta editörü ve görev düzenleme -->
+<title>Birim Küp Öğretmen Paneli</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* Düzen: üst çubuk + sayfa içeriği; sunum modu tam ekran, solda 3B sahne, sağda öğretmen paneli.
+   Renk: soğuk kâğıt nötrleri, vurgu mavisi; beş küp rengi setteki fiziksel küplerle aynı. */
+:root{
+  --bg:#EEF1F6; --surface:#FFFFFF; --surface-2:#E7ECF4; --ink:#15203B; --ink-2:#56627E; --line:#D3DAE6;
+  --accent:#3E63DD; --accent-ink:#FFFFFF; --accent-soft:#E3E9FB;
+  --ok:#1F7A52; --ok-soft:#DDF3E8; --warn:#8F5A00; --warn-soft:#FBEBC8; --bad:#B3342E; --bad-soft:#FBE0DE;
+  --stage:#E1E7F0; --board:#C7D0E2; --board-side:#AAB6CE; --board-line:#97A5C2;
+  --c0:#E5484D; --c1:#3E63DD; --c2:#F5B700; --c3:#30A46C; --c4:#8E4EC6;
+  --font-display:'Lexend',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-body:'Nunito Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1424; --surface:#161E33; --surface-2:#1F2942; --ink:#E7ECF7; --ink-2:#9BA7C4; --line:#2A3555;
+    --accent:#86A0F7; --accent-ink:#0D1533; --accent-soft:#222E57;
+    --ok:#4CC38A; --ok-soft:#133528; --warn:#F0B04A; --warn-soft:#3A2D10; --bad:#F2817A; --bad-soft:#3E1B1A;
+    --stage:#0B101E; --board:#2C3858; --board-side:#222C47; --board-line:#3E4C72;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1424; --surface:#161E33; --surface-2:#1F2942; --ink:#E7ECF7; --ink-2:#9BA7C4; --line:#2A3555;
+  --accent:#86A0F7; --accent-ink:#0D1533; --accent-soft:#222E57;
+  --ok:#4CC38A; --ok-soft:#133528; --warn:#F0B04A; --warn-soft:#3A2D10; --bad:#F2817A; --bad-soft:#3E1B1A;
+  --stage:#0B101E; --board:#2C3858; --board-side:#222C47; --board-line:#3E4C72;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:auto}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.55 var(--font-body);-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--surface)}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;margin:0;line-height:1.2;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.muted{color:var(--ink-2)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* Üst çubuk */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--surface);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:12px 20px;flex-wrap:wrap;padding-block:10px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:18px;line-height:1.1}
+.brand small{display:block;font:600 12px var(--font-body);color:var(--ink-2);letter-spacing:.03em;margin-top:2px}
+nav{display:flex;gap:4px;margin-left:auto}
+nav a{padding:8px 14px;border-radius:10px;color:var(--ink-2);font-weight:700;text-decoration:none}
+nav a:hover{background:var(--surface-2)}
+nav a[aria-current="page"]{background:var(--accent-soft);color:var(--accent)}
+main{padding-block:26px 56px}
+.page-head{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.page-head h1{font-size:clamp(24px,3.2vw,32px)}
+.page-head p{color:var(--ink-2);max-width:62ch}
+
+/* Düğmeler ve etiketler */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700;cursor:pointer;line-height:1.2}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:7px 12px;font-size:13px}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:default}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer;font-size:14px}
+.chip:hover{background:var(--surface-2)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.filters{display:flex;flex-direction:column;gap:12px;margin-bottom:22px}
+.filters .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.filters .lbl{font:700 12px var(--font-body);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);min-width:56px}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;background:var(--surface-2);color:var(--ink-2)}
+.pill.l1{background:var(--ok-soft);color:var(--ok)}
+.pill.l2{background:var(--warn-soft);color:var(--warn)}
+.pill.l3{background:var(--bad-soft);color:var(--bad)}
+.pill.demo{background:var(--accent-soft);color:var(--accent)}
+
+/* Görev kartları */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.task{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;min-width:0}
+.task:hover{border-color:var(--accent)}
+.task .thumb{aspect-ratio:4/3;background:var(--stage);border-bottom:1px solid var(--line)}
+.task canvas{width:100%;height:100%;display:block}
+.task .meta{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.task .t-skill{font-family:var(--font-display);font-weight:700;font-size:15px;line-height:1.25}
+.task .t-sub{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;color:var(--ink-2);font-size:13px}
+.task .btn{margin-top:auto}
+.empty{padding:28px;border:1px dashed var(--line);border-radius:14px;color:var(--ink-2);text-align:center}
+
+/* Paneller */
+.two{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:20px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+.panel h2{font-size:18px;margin-bottom:12px}
+.panel+.panel{margin-top:0}
+.stack{display:flex;flex-direction:column;gap:20px}
+.list{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:6px}
+.class-item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:700}
+.class-item small{font-weight:600;color:var(--ink-2)}
+.class-item[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.stu{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.stu .nm{overflow-wrap:anywhere}
+.inline-form{display:flex;gap:8px;flex-wrap:wrap}
+.inline-form input{flex:1 1 160px;min-width:0}
+input[type="text"],select,textarea{padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);min-width:0}
+textarea{width:100%;min-height:110px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+details{margin-top:12px}
+summary{cursor:pointer;font-weight:700}
+details>*:not(summary){margin-top:10px}
+.note{font-size:13px;color:var(--ink-2)}
+.banner{padding:10px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-weight:600;margin-bottom:16px;font-size:14px}
+
+/* Gelişim */
+.insight{padding:14px 16px;border-radius:12px;background:var(--accent-soft);margin-bottom:18px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-variant-numeric:tabular-nums}
+th,td{padding:10px 12px;text-align:center;border-bottom:1px solid var(--line);font-size:14px}
+th{font:700 12px var(--font-body);letter-spacing:.04em;color:var(--ink-2);text-transform:uppercase;background:var(--surface-2)}
+th:first-child,td:first-child{text-align:left}
+tbody tr{cursor:pointer}
+tbody tr:hover td:first-child{color:var(--accent)}
+tbody tr[aria-selected="true"]{background:var(--accent-soft)}
+tfoot td{font-weight:700;background:var(--surface-2);border-bottom:0}
+.cell{display:inline-block;min-width:54px;padding:3px 8px;border-radius:8px;font-weight:700}
+.cell small{display:block;font-weight:600;font-size:11px;opacity:.8}
+.cell.ok{background:var(--ok-soft);color:var(--ok)}
+.cell.mid{background:var(--warn-soft);color:var(--warn)}
+.cell.low{background:var(--bad-soft);color:var(--bad)}
+.cell.none{color:var(--ink-2);font-weight:600}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:minmax(110px,170px) 1fr 70px;gap:10px;align-items:center;font-size:14px}
+.bar .track{height:12px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bar .fill{height:100%;border-radius:99px;background:var(--accent)}
+.bar .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.bar .val small{font-weight:600;color:var(--ink-2)}
+.detail{margin-top:20px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--ink-2);font:600 11px var(--font-body)}
+.chart .val{fill:var(--ink);font-weight:700}
+.recent{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.recent li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+.out{font-weight:700}
+.out.d{color:var(--ok)}.out.y{color:var(--warn)}.out.x{color:var(--bad)}
+
+/* Sunum modu */
+html.pres-open,html.pres-open body{overflow:hidden}
+.pres{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;grid-template-columns:minmax(0,1fr) min(450px,40vw);
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.pres.clean{grid-template-columns:minmax(0,1fr)}
+.pres.clean .side{display:none}
+.stage{position:relative;min-width:0;min-height:0;background:var(--stage);overflow:hidden}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas:active{cursor:grabbing}
+.stage-tools{position:absolute;left:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 24px)}
+.stage-tools .btn{padding:7px 12px;font-size:13px;background:var(--surface)}
+.stage-note{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;pointer-events:none;font:700 clamp(18px,2.4vw,28px)/1.3 var(--font-display);color:var(--ink-2)}
+.floating{position:absolute;top:12px;right:12px;z-index:2}
+.side{display:flex;flex-direction:column;min-height:0;background:var(--surface);border-left:1px solid var(--line)}
+.side-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.side-head .count{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink-2);margin:0 4px}
+.side-head .sp{flex:1}
+.side-body{overflow:auto;padding:16px 18px 24px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.p-meta{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:13px;color:var(--ink-2);font-weight:600}
+.p-prompt{font-size:clamp(19px,2vw,26px);line-height:1.3}
+.p-actions{display:flex;flex-wrap:wrap;gap:8px}
+.layerbox{padding:12px 14px;border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:8px;font-weight:700}
+.layerbox input[type="range"]{width:100%;accent-color:var(--accent)}
+.hintbox,.answer{padding:12px 14px;border-radius:12px;font-size:16px}
+.hintbox{background:var(--warn-soft);color:var(--ink)}
+.answer{background:var(--ok-soft);color:var(--ink)}
+.answer b{font-variant-numeric:tabular-nums}
+.views{display:flex;flex-wrap:wrap;gap:14px}
+.view{margin:0;flex:1 1 120px;max-width:190px}
+.view svg{width:100%;height:auto;display:block;font-family:var(--font-display)}
+.view figcaption{text-align:center;font-size:12px;font-weight:700;color:var(--ink-2);margin-top:4px;letter-spacing:.03em}
+.dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;border:1px solid rgba(8,12,28,.5)}
+.evalbox{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.evalbox h3{font-size:16px}
+.eval-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.eval-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.eval-list li{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.eval-list .nm{font-weight:600;overflow-wrap:anywhere}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 10px;font-size:13px;font-weight:700;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--surface-2)}
+.seg .o-d[aria-pressed="true"]{background:var(--ok);color:var(--accent-ink)}
+.seg .o-y[aria-pressed="true"]{background:var(--warn);color:var(--accent-ink)}
+.seg .o-x[aria-pressed="true"]{background:var(--bad);color:var(--accent-ink)}
+
+@media (max-width:860px){
+  .two,.detail{grid-template-columns:minmax(0,1fr)}
+  .bar{grid-template-columns:1fr 70px}
+  .bar .track{grid-column:1 / -1;order:3}
+  .pres{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,44%) minmax(0,1fr)}
+  .side{border-left:0;border-top:1px solid var(--line)}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<link rel="stylesheet" href="editor.css">
+<link rel="stylesheet" href="student.css">
+<link rel="stylesheet" href="report.css">
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <polygon points="17,3 30,10 17,17 4,10" fill="#F5B700" stroke="rgba(8,12,28,.5)" stroke-linejoin="round"/>
+        <polygon points="4,10 17,17 17,31 4,24" fill="#3E63DD" stroke="rgba(8,12,28,.5)" stroke-linejoin="round"/>
+        <polygon points="30,10 17,17 17,31 30,24" fill="#E5484D" stroke="rgba(8,12,28,.5)" stroke-linejoin="round"/>
+      </svg>
+      <div>Birim Küp<small>ÖĞRETMEN PANELİ</small></div>
+    </div>
+    <nav aria-label="Ana menü">
+      <a href="#tahta" data-nav="tahta">Tahta</a>
+      <a href="#gorevler" data-nav="gorevler">Görevler</a>
+      <a href="#ogrenci" data-nav="ogrenci">Öğrenci</a>
+      <a href="#siniflar" data-nav="siniflar">Sınıflar</a>
+      <a href="#gelisim" data-nav="gelisim">Gelişim</a>
+      <a href="#rapor" data-nav="rapor">Rapor</a>
+      <a href="#hesap" data-nav="hesap" id="clChip">Hesap</a>
+      <a class="btn small nav-entry" href="#giris">Öğrenci girişi</a>
+    </nav>
+  </div>
+</header>
+<main id="app" class="wrap"></main>
+
+<div id="pres" class="pres" hidden role="dialog" aria-modal="true" aria-label="Görev sunumu">
+  <div class="stage" id="stage">
+    <canvas id="pcv" aria-label="Üç boyutlu küp yapısı"></canvas>
+    <div class="stage-note" id="stageNote" hidden></div>
+    <div class="stage-tools" role="group" aria-label="Bakış açısı">
+      <button class="btn" data-act="cam" data-v="corner">Köşe</button>
+      <button class="btn" data-act="cam" data-v="top">Üstten</button>
+      <button class="btn" data-act="cam" data-v="front">Önden</button>
+      <button class="btn" data-act="cam" data-v="right">Sağdan</button>
+      <button class="btn" data-act="zoom" data-d="-1" aria-label="Uzaklaş">−</button>
+      <button class="btn" data-act="zoom" data-d="1" aria-label="Yakınlaş">+</button>
+    </div>
+    <button class="btn floating" id="pShow" data-act="panel" hidden>Paneli göster</button>
+  </div>
+  <aside class="side" id="side">
+    <div class="side-head">
+      <button class="btn small" data-act="close">Kapat</button>
+      <span class="count" id="pCount"></span>
+      <button class="btn small" data-act="prev" aria-label="Önceki görev">←</button>
+      <button class="btn small" data-act="next" aria-label="Sonraki görev">→</button>
+      <span class="sp"></span>
+      <button class="btn small" data-act="panel">Paneli gizle</button>
+      <button class="btn small" data-act="full">Tam ekran</button>
+    </div>
+    <div class="side-body" id="sideBody"></div>
+  </aside>
+</div>
+
+<div id="play" class="play" hidden role="dialog" aria-modal="true" aria-label="Öğrenci etkinliği"></div>
+<script src="config.js"></script>
+<script src="cloud.js"></script>
+<script src="cloud-ui.js"></script>
+<script src="report.js"></script>
+<script src="student-core.js"></script>
+<script src="student-ui.js"></script>
+<script src="editor-core.js"></script>
+<script src="editor-ui.js"></script>
+<script src="editor-ctl.js"></script>
+<script>
+'use strict';
+/* ===================== Sabitler ===================== */
+const N = 5;
+/* Renkler fiziksel setten: kırmızı, mavi, sarı, yeşil, siyah (her renkten 5 küp) */
+const COLORS = ['#E74C3C', '#3285D8', '#F2C230', '#25A66A', '#20252D'];
+const TXT = ['#FFFFFF', '#FFFFFF', '#2A1F00', '#FFFFFF', '#FFFFFF'];
+const CNAMES = ['kırmızı', 'mavi', 'sarı', 'yeşil', 'siyah'];
+const CTITLES = ['Kırmızı', 'Mavi', 'Sarı', 'Yeşil', 'Siyah'];
+/* Zemin satır renkleri (z = 0 → 5. satır … z = 4 → 1. satır) ve sütun/satır adları */
+const ROW_COLORS = ['#F2B7B7', '#AECDF2', '#F5DF83', '#A9DFBD', '#F4C08F'];
+const COL_LABELS = ['A', 'B', 'C', 'D', 'E'];
+const rowLabel = z => String(5 - z);
+const SKILLS = [
+  { key: 'yapi', name: '3B yapı oluşturma', short: 'Yapı' },
+  { key: 'dondurme', name: 'Zihinsel döndürme', short: 'Döndürme' },
+  { key: 'katman', name: 'Katman ve yükseklik', short: 'Katman' },
+  { key: 'gizli', name: 'Gizli küpler', short: 'Gizli küp' },
+  { key: 'gorunus', name: 'Üstten, önden, yandan görünüş', short: 'Görünüş' },
+  { key: 'parca', name: 'Parça-bütün ilişkisi', short: 'Parça-bütün' }
+];
+const SKILL_BY = Object.fromEntries(SKILLS.map(s => [s.key, s]));
+const LEVELS = [
+  { n: 1, age: '5–6 yaş', T: [4, 8], H: 2, F: 4 },
+  { n: 2, age: '7–9 yaş', T: [9, 15], H: 3, F: 6 },
+  { n: 3, age: '10–12 yaş', T: [16, 25], H: 5, F: 9 }
+];
+const BANK = 6;
+const DEF_CAM = { a: -Math.PI / 4, e: 0.6154, zoom: 1 };
+const SC = { d: 1, y: 0.5, x: 0 };
+const OUTL = { d: 'Doğru', y: 'Yardımla', x: 'Yanlış' };
+const DIRS = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+
+/* ===================== Yardımcılar ===================== */
+const key3 = (x, y, z) => x + ',' + y + ',' + z;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad2 = n => (n < 10 ? '0' : '') + n;
+function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const ri = (rng, a, b) => a + Math.floor(rng() * (b - a + 1));
+function shuffle(arr, rng) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+const dayStr = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const dayDate = s => { const p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+const fmtDay = s => dayDate(s).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+function weeksAgo(s) { const now = new Date(); const t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()); return Math.floor(Math.round((t0 - dayDate(s)) / 864e5) / 7); }
+
+/* ===================== Yapı üretimi ===================== */
+function genHeights(rng, T, maxH, maxFoot) {
+  const h = Array.from({ length: N }, () => Array(N).fill(0));
+  h[ri(rng, 0, N - 1)][ri(rng, 0, N - 1)] = 1;
+  let total = 1, foot = 1, guard = 0;
+  while (total < T && guard++ < 800) {
+    const ups = [], news = [];
+    for (let x = 0; x < N; x++) for (let z = 0; z < N; z++) {
+      if (h[x][z] > 0 && h[x][z] < maxH) ups.push([x, z]);
+      if (h[x][z] === 0 && foot < maxFoot) {
+        if ((x > 0 && h[x - 1][z] > 0) || (x < N - 1 && h[x + 1][z] > 0) || (z > 0 && h[x][z - 1] > 0) || (z < N - 1 && h[x][z + 1] > 0)) news.push([x, z]);
+      }
+    }
+    let pool;
+    if (ups.length && news.length) pool = rng() < 0.5 ? ups : news; else pool = ups.length ? ups : news;
+    if (!pool.length) break;
+    const c = pool[ri(rng, 0, pool.length - 1)];
+    if (h[c[0]][c[1]] === 0) foot++;
+    h[c[0]][c[1]]++; total++;
+  }
+  return h;
+}
+function cubesFromH(h, rng) {
+  const cubes = [];
+  for (let x = 0; x < N; x++) for (let z = 0; z < N; z++) for (let y = 0; y < h[x][z]; y++) cubes.push({ x, y, z, c: 0, p: 0 });
+  shuffle(cubes.map((_, i) => i), rng).forEach((ci, i) => { cubes[ci].c = i % 5; });
+  return cubes;
+}
+const maxHeight = h => Math.max(0, ...h.flat());
+const footprint = h => h.flat().filter(v => v > 0).length;
+function rotateH(h, k) {
+  let cur = h;
+  for (let i = 0; i < k; i++) {
+    const nx = Array.from({ length: N }, () => Array(N).fill(0));
+    for (let x = 0; x < N; x++) for (let z = 0; z < N; z++) nx[N - 1 - z][x] = cur[x][z];
+    cur = nx;
+  }
+  return cur;
+}
+function rotCubes(cubes, k) {
+  return cubes.map(c => {
+    let x = c.x, z = c.z;
+    for (let i = 0; i < k; i++) { const nx = N - 1 - z, nz = x; x = nx; z = nz; }
+    return { x, y: c.y, z, c: c.c, p: c.p };
+  });
+}
+/* Köşeden (sağ-ön-üst) bakışta en az bir yüzünün bir kısmı görünen küpler */
+function visibleKeys(cubes) {
+  const occ = new Set(cubes.map(c => key3(c.x, c.y, c.z)));
+  const step = 0.05 / Math.sqrt(3);
+  const blocked = (px, py, pz) => {
+    let x = px + 0.002, y = py + 0.002, z = pz + 0.002;
+    for (let i = 0; i < 300; i++) {
+      const cx = Math.floor(x), cy = Math.floor(y), cz = Math.floor(z);
+      if (cx >= N || cy >= N || cz >= N) return false;
+      if (occ.has(cx + ',' + cy + ',' + cz)) return true;
+      x += step; y += step; z += step;
+    }
+    return false;
+  };
+  const S = [0.17, 0.5, 0.83];
+  const vis = new Set();
+  for (const c of cubes) {
+    let seen = false;
+    for (const u of S) { for (const v of S) {
+      if (!blocked(c.x + u, c.y + 1, c.z + v) || !blocked(c.x + u, c.y + v, c.z + 1) || !blocked(c.x + 1, c.y + u, c.z + v)) { seen = true; break; }
+    } if (seen) break; }
+    if (seen) vis.add(key3(c.x, c.y, c.z));
+  }
+  return vis;
+}
+function partition(cubes, k, rng) {
+  const idx = new Map(cubes.map((c, i) => [key3(c.x, c.y, c.z), i]));
+  const owner = Array(cubes.length).fill(-1), size = Array(k).fill(0);
+  shuffle(cubes.map((_, i) => i), rng).slice(0, k).forEach((ci, p) => { owner[ci] = p; size[p] = 1; });
+  let assigned = k, progress = true;
+  while (assigned < cubes.length && progress) {
+    progress = false;
+    for (let p = 0; p < k; p++) {
+      if (size[p] >= 5) continue;
+      const cand = [];
+      for (let i = 0; i < cubes.length; i++) if (owner[i] === p) {
+        const c = cubes[i];
+        for (const d of DIRS) { const j = idx.get(key3(c.x + d[0], c.y + d[1], c.z + d[2])); if (j !== undefined && owner[j] === -1 && !cand.includes(j)) cand.push(j); }
+      }
+      if (cand.length) { const j = cand[ri(rng, 0, cand.length - 1)]; owner[j] = p; size[p]++; assigned++; progress = true; }
+    }
+  }
+  if (assigned < cubes.length) return false;
+  cubes.forEach((c, i) => { c.p = owner[i]; c.c = owner[i]; });
+  return true;
+}
+function partOffsets(cubes, k) {
+  const cen = Array.from({ length: k }, () => [0, 0, 0, 0]);
+  let tx = 0, ty = 0, tz = 0;
+  cubes.forEach(c => { const a = cen[c.p]; a[0] += c.x + .5; a[1] += c.y + .5; a[2] += c.z + .5; a[3]++; tx += c.x + .5; ty += c.y + .5; tz += c.z + .5; });
+  tx /= cubes.length; ty /= cubes.length; tz /= cubes.length;
+  return cen.map((a, p) => {
+    let dx = a[0] / a[3] - tx, dy = Math.max(0, (a[1] / a[3] - ty) * 0.5), dz = a[2] / a[3] - tz;
+    let len = Math.hypot(dx, dy, dz);
+    if (len < 0.2) { const ang = p * 2 * Math.PI / k; dx = Math.cos(ang); dz = Math.sin(ang); dy = 0; len = 1; }
+    const m = 2.2 / len;
+    return [dx * m, dy * m, dz * m];
+  });
+}
+
+/* ===================== Görev üretimi ===================== */
+const taskCache = new Map();
+const parseId = id => { const p = id.split('.'); return { skill: p[0], level: +p[1], seed: parseInt(p[2], 10) || 0 }; };
+function getTask(id) { if (!taskCache.has(id)) taskCache.set(id, makeTask(id)); return taskCache.get(id); }
+function candidate(skill, level, seed, rng) {
+  const L = LEVELS[level - 1];
+  let Tmin = L.T[0], Tmax = L.T[1], k = 0;
+  if (skill === 'gizli' && level === 1) Tmin = 5;
+  if (skill === 'parca') {
+    k = level === 1 ? 2 : level === 2 ? 3 : (rng() < 0.5 ? 4 : 5);
+    Tmin = level === 1 ? 6 : level === 2 ? 9 : (k === 4 ? 16 : 21);
+    Tmax = level === 1 ? 8 : level === 2 ? 13 : (k === 4 ? 20 : 25);
+  }
+  const h = genHeights(rng, ri(rng, Tmin, Tmax), L.H, L.F);
+  const cubes = cubesFromH(h, rng);
+  const t = { id: '', skill, level, seed, h, cubes, T: cubes.length, maxH: maxHeight(h), foot: footprint(h), k: 0, parts: 0, variant: '', vis: null, offsets: null };
+  let ok = t.T >= Math.min(Tmin, 4);
+  if (skill === 'yapi') ok = ok && t.foot >= 2;
+  if (skill === 'katman') ok = ok && t.maxH >= 2;
+  if (skill === 'gizli') { t.vis = visibleKeys(cubes); ok = ok && t.T - t.vis.size >= 1; }
+  if (skill === 'dondurme') {
+    t.k = level === 1 ? ri(rng, 1, 2) : ri(rng, 1, 3);
+    ok = ok && JSON.stringify(rotateH(h, t.k)) !== JSON.stringify(h);
+  }
+  if (skill === 'gorunus') { t.variant = seed % 2 ? 'cizim' : 'kur'; ok = ok && t.maxH >= 2; }
+  if (skill === 'parca') {
+    t.parts = k;
+    ok = ok && partition(cubes, k, rng);
+    if (ok) t.offsets = partOffsets(cubes, k);
+  }
+  t.ok = ok;
+  return t;
+}
+function makeTask(id) {
+  const cd = (SES.defs && SES.defs[id]) || (DB && DB.tasks && DB.tasks[id]);
+  if (cd) return taskFromDef(cd);
+  const { skill, level, seed } = parseId(id);
+  const rng = mulberry32(hashStr(id));
+  let t = null;
+  for (let i = 0; i < 400; i++) { t = candidate(skill, level, seed, rng); if (t.ok) break; }
+  t.id = id;
+  if (skill === 'parca' && !t.offsets) { t.parts = 1; t.offsets = [[0, 0, 0]]; }
+  return t;
+}
+const layerCounts = t => { const a = Array(t.maxH).fill(0); t.cubes.forEach(c => a[c.y]++); return a; };
+
+/* ===================== Çizim motoru (Canvas 2D, bağımlılık yok) ===================== */
+const RGB = COLORS.map(h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; });
+const shadeCol = (i, f) => { const c = RGB[i], l = i === 4 ? 30 : 0; return 'rgb(' + Math.min(255, (c[0] * f | 0) + l) + ',' + Math.min(255, (c[1] * f | 0) + l) + ',' + Math.min(255, (c[2] * f | 0) + l) + ')'; };
+const dimHex = (h, f) => { const n = parseInt(h.slice(1), 16); return 'rgb(' + ((n >> 16 & 255) * f | 0) + ',' + ((n >> 8 & 255) * f | 0) + ',' + ((n & 255) * f | 0) + ')'; };
+const FACES = [
+  { n: [0, 1, 0], v: [[0, 1, 0], [1, 1, 0], [1, 1, 1], [0, 1, 1]] },
+  { n: [0, 0, 1], v: [[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]] },
+  { n: [0, 0, -1], v: [[0, 0, 0], [0, 1, 0], [1, 1, 0], [1, 0, 0]] },
+  { n: [1, 0, 0], v: [[1, 0, 0], [1, 1, 0], [1, 1, 1], [1, 0, 1]] },
+  { n: [-1, 0, 0], v: [[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]] }
+];
+const LIGHT = (() => { const l = [-0.35, 0.75, 0.55]; const m = Math.hypot(l[0], l[1], l[2]); return l.map(v => v / m); })();
+function themeColors() {
+  const cs = getComputedStyle(document.documentElement);
+  const g = n => cs.getPropertyValue(n).trim();
+  const stage = g('--stage') || '#E1E7F0';
+  return { stage, board: g('--board') || '#C7D0E2', side: g('--board-side') || '#AAB6CE', line: g('--board-line') || '#97A5C2', acc: g('--accent') || '#3E63DD', ink: g('--ink-2') || '#56627E', fl: /^#[0-3]/.test(stage) ? 0.72 : 1 };
+}
+function renderScene(ctx, w, h, st, cam, th) {
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = th.stage; ctx.fillRect(0, 0, w, h);
+  const s = Math.min(w, h) / 9.2 * cam.zoom;
+  const cx = w / 2, cy = h / 2 + s * 1.1 * Math.cos(cam.e);
+  const ca = Math.cos(cam.a), sa = Math.sin(cam.a), ce = Math.cos(cam.e), se = Math.sin(cam.e);
+  const yw = st.yaw || 0, cyw = Math.cos(yw), syw = Math.sin(yw);
+  const tv = (x, y, z) => {
+    const qx = x - 2.5, qz = z - 2.5;
+    const x2 = qx * cyw - qz * syw, z2 = qx * syw + qz * cyw;
+    const x1 = x2 * ca + z2 * sa, z1 = -x2 * sa + z2 * ca;
+    return [cx + x1 * s, cy - (y * ce - z1 * se) * s, z1 * ce + y * se];
+  };
+  const nv = n => {
+    const x2 = n[0] * cyw - n[2] * syw, z2 = n[0] * syw + n[2] * cyw;
+    const x1 = x2 * ca + z2 * sa, z1 = -x2 * sa + z2 * ca;
+    return [x1, n[1] * ce - z1 * se, z1 * ce + n[1] * se];
+  };
+  const poly = (pts, fill, stroke, lw, alpha) => {
+    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+    ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  };
+  /* Tahta */
+  const bt = 0.4, B = [
+    { n: [0, 1, 0], v: [[0, 0, 0], [5, 0, 0], [5, 0, 5], [0, 0, 5]], col: th.board },
+    { n: [0, 0, 1], v: [[0, -bt, 5], [5, -bt, 5], [5, 0, 5], [0, 0, 5]], col: th.side },
+    { n: [0, 0, -1], v: [[0, -bt, 0], [0, 0, 0], [5, 0, 0], [5, -bt, 0]], col: th.side },
+    { n: [1, 0, 0], v: [[5, -bt, 0], [5, 0, 0], [5, 0, 5], [5, -bt, 5]], col: th.side },
+    { n: [-1, 0, 0], v: [[0, -bt, 0], [0, -bt, 5], [0, 0, 5], [0, 0, 0]], col: th.side }
+  ];
+  const lw = Math.max(1, s * 0.035);
+  const hits = st.hits || null;
+  for (const f of B) { if (nv(f.n)[2] > 1e-6) poly(f.v.map(p => tv(p[0], p[1], p[2])), f.col, th.line, 1); }
+  if (se > 0.02) {
+    /* Zemin: her satırın kendi rengi; sütunlar A–E, satırlar 5–1 */
+    for (let z = 0; z < N; z++) for (let x = 0; x < N; x++) {
+      const pts = [tv(x, 0, z), tv(x + 1, 0, z), tv(x + 1, 0, z + 1), tv(x, 0, z + 1)];
+      poly(pts, dimHex(ROW_COLORS[z], th.fl), th.line, 1);
+      if (hits) hits.push({ k: 'f', x, z, pts });
+    }
+    if (se > 0.25) {
+      ctx.fillStyle = th.ink; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '700 ' + Math.max(10, Math.min(22, s * 0.36)) + 'px system-ui,sans-serif';
+      for (let i = 0; i < N; i++) {
+        const a = tv(i + 0.5, 0, N + 0.4), b = tv(-0.4, 0, i + 0.5);
+        ctx.fillText(COL_LABELS[i], a[0], a[1]); ctx.fillText(rowLabel(i), b[0], b[1]);
+      }
+    }
+  }
+  /* Küpler */
+  let cubes = st.cubes || [];
+  if (st.maxLayer != null) cubes = cubes.filter(c => c.y < st.maxLayer);
+  const sep = (st.explode || 0) > 0.02;
+  const occ = new Map(); cubes.forEach(c => occ.set(key3(c.x, c.y, c.z), c));
+  const out = [];
+  for (const c of cubes) {
+    const off = sep && st.offsets && st.offsets[c.p] ? st.offsets[c.p] : null;
+    const ox = off ? off[0] * st.explode : 0, oy = off ? off[1] * st.explode : 0, oz = off ? off[2] * st.explode : 0;
+    const dim = st.dim && st.dim.has(key3(c.x, c.y, c.z));
+    const full = st.dim && !dim; /* gizli küpler: örtülü yüzler de çizilir, soluk komşuların altından görünsün */
+    for (const F of FACES) {
+      const nb = occ.get(key3(c.x + F.n[0], c.y + F.n[1], c.z + F.n[2]));
+      if (nb && !full && (!sep || nb.p === c.p)) continue;
+      const n = nv(F.n);
+      if (n[2] <= 1e-6) continue;
+      const pts = F.v.map(v => tv(c.x + v[0] + ox, c.y + v[1] + oy, c.z + v[2] + oz));
+      const depth = (pts[0][2] + pts[1][2] + pts[2][2] + pts[3][2]) / 4;
+      const d = Math.max(0, n[0] * LIGHT[0] + n[1] * LIGHT[1] + n[2] * LIGHT[2]);
+      out.push({ pts, depth, col: shadeCol(c.c, 0.55 + 0.5 * d), alpha: dim ? 0.18 : 1, edge: c.c === 4, x: c.x, y: c.y, z: c.z });
+    }
+  }
+  out.sort((a, b) => a.depth - b.depth);
+  for (const f of out) {
+    poly(f.pts, f.col, f.edge ? 'rgba(255,255,255,0.32)' : 'rgba(8,12,28,' + (f.alpha < 1 ? 0.25 : 0.55) + ')', lw, f.alpha);
+    if (hits) hits.push({ k: 'c', x: f.x, y: f.y, z: f.z, pts: f.pts });
+  }
+  /* Seçili hücre: yığının üstünde kesikli çerçeve */
+  if (st.sel) {
+    let top = 0; (st.cubes || []).forEach(c => { if (c.x === st.sel.x && c.z === st.sel.z) top = Math.max(top, c.y + 1); });
+    const q = [tv(st.sel.x, top, st.sel.z), tv(st.sel.x + 1, top, st.sel.z), tv(st.sel.x + 1, top, st.sel.z + 1), tv(st.sel.x, top, st.sel.z + 1)];
+    ctx.globalAlpha = 0.22; ctx.fillStyle = th.acc; ctx.beginPath(); ctx.moveTo(q[0][0], q[0][1]); for (let i = 1; i < 4; i++) ctx.lineTo(q[i][0], q[i][1]); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 1; ctx.strokeStyle = th.acc; ctx.lineWidth = 3; ctx.setLineDash([7, 4]); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+
+class Viewer {
+  constructor(canvas, interactive) {
+    this.cv = canvas; this.ctx = canvas.getContext('2d');
+    this.cam = { a: DEF_CAM.a, e: DEF_CAM.e, zoom: 1.1 };
+    this.st = { cubes: [], yaw: 0, explode: 0 };
+    this.tok = {}; this.w = 1; this.h = 1; this.dpr = 1; this.onPick = null; this.pickable = false;
+    this.reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (typeof ResizeObserver !== 'undefined') { this.ro = new ResizeObserver(() => this.resize()); this.ro.observe(canvas); }
+    this.resize();
+    if (interactive) this.bind();
+  }
+  resize() {
+    const r = this.cv.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+    if (w === this.w && h === this.h && dpr === this.dpr && this.cv.width === w * dpr) { return; }
+    this.w = w; this.h = h; this.dpr = dpr;
+    this.cv.width = w * dpr; this.cv.height = h * dpr;
+    this.draw();
+  }
+  draw() {
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    if (this.pickable) this.st.hits = [];
+    renderScene(this.ctx, this.w, this.h, this.st, this.cam, themeColors());
+  }
+  anim(prop, get, set, to, ms) {
+    const from = get();
+    const tok = this.tok[prop] = (this.tok[prop] || 0) + 1;
+    if (this.reduce || ms <= 0) { set(to); this.draw(); return; }
+    const t0 = performance.now();
+    const step = now => {
+      if (this.tok[prop] !== tok) return;
+      let k = Math.min(1, (now - t0) / ms);
+      k = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      set(from + (to - from) * k); this.draw();
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  goCam(to, ms) {
+    let da = to.a - this.cam.a; da = Math.atan2(Math.sin(da), Math.cos(da));
+    this.anim('a', () => this.cam.a, v => { this.cam.a = v; }, this.cam.a + da, ms);
+    this.anim('e', () => this.cam.e, v => { this.cam.e = v; }, to.e, ms);
+    if (to.zoom != null) this.anim('z', () => this.cam.zoom, v => { this.cam.zoom = v; }, to.zoom, ms);
+  }
+  destroy() { if (this.ro) this.ro.disconnect(); this.tok = {}; }
+  hit(px, py) {
+    const hs = this.st.hits || [];
+    const inside = pts => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const a = pts[i], b = pts[j]; if ((a[1] > py) !== (b[1] > py) && px < (b[0] - a[0]) * (py - a[1]) / (b[1] - a[1]) + a[0]) c = !c; } return c; };
+    for (let i = hs.length - 1; i >= 0; i--) if (inside(hs[i].pts)) return hs[i];
+    return null;
+  }
+  bind() {
+    const cv = this.cv; let drag = null, start = null;
+    cv.addEventListener('pointerdown', e => { start = { x: e.clientX, y: e.clientY }; drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); this.tok.a = (this.tok.a || 0) + 1; this.tok.e = (this.tok.e || 0) + 1; });
+    cv.addEventListener('pointermove', e => {
+      if (!drag) return;
+      this.cam.a += (e.clientX - drag.x) * 0.01;
+      this.cam.e = Math.max(0, Math.min(Math.PI / 2, this.cam.e + (e.clientY - drag.y) * 0.01));
+      drag = { x: e.clientX, y: e.clientY }; this.draw();
+    });
+    const end = () => { drag = null; start = null; };
+    cv.addEventListener('pointerup', e => {
+      if (start && this.onPick && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 5) { const r = cv.getBoundingClientRect(); this.onPick(this.hit(e.clientX - r.left, e.clientY - r.top), e); }
+      end();
+    });
+    cv.addEventListener('pointercancel', end);
+    cv.addEventListener('wheel', e => { e.preventDefault(); this.cam.zoom = Math.max(0.5, Math.min(2.6, this.cam.zoom * (e.deltaY < 0 ? 1.08 : 0.92))); this.draw(); }, { passive: false });
+  }
+}
+const thumbs = [];
+function drawThumb(cv, t) {
+  const r = cv.getBoundingClientRect(), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.round(r.width) || 220, h = Math.round(r.height) || 165;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  renderScene(ctx, w, h, { cubes: t.cubes, yaw: 0, explode: 0 }, { a: DEF_CAM.a, e: DEF_CAM.e, zoom: 1.3 }, themeColors());
+}
+
+/* ===================== 2B görünüşler (SVG) ===================== */
+function gridSVG(cols, rows, cell, label) {
+  const cs = 26, pad = 2, W = cols * cs + pad * 2, H = rows * cs + pad * 2;
+  let g = '';
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const d = cell(r, c), x = pad + c * cs, y = pad + r * cs;
+    if (d) {
+      g += '<rect x="' + x + '" y="' + y + '" width="' + cs + '" height="' + cs + '" rx="3" fill="' + COLORS[d.c] + '" stroke="rgba(8,12,28,.5)"/>';
+      if (d.t != null) g += '<text x="' + (x + cs / 2) + '" y="' + (y + cs / 2 + 5) + '" text-anchor="middle" font-size="14" font-weight="700" fill="' + TXT[d.c] + '">' + d.t + '</text>';
+    } else {
+      g += '<rect x="' + x + '" y="' + y + '" width="' + cs + '" height="' + cs + '" rx="3" style="fill:var(--surface-2);stroke:var(--line)"/>';
+    }
+  }
+  return '<figure class="view"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + label + '">' + g + '</svg><figcaption>' + label + '</figcaption></figure>';
+}
+function topMap(cubes) {
+  const m = Array.from({ length: N }, () => Array(N).fill(null));
+  cubes.forEach(c => { const cur = m[c.x][c.z]; if (!cur || c.y + 1 > cur.t) m[c.x][c.z] = { c: c.c, t: c.y + 1 }; });
+  return m;
+}
+const viewTop = (cubes, label) => { const m = topMap(cubes); return gridSVG(N, N, (r, c) => m[c][r], label); };
+function viewFront(cubes, rows) {
+  const best = {};
+  cubes.forEach(c => { const k = c.x + ',' + c.y; if (!best[k] || c.z > best[k].z) best[k] = c; });
+  return gridSVG(N, rows, (r, c) => { const b = best[c + ',' + (rows - 1 - r)]; return b ? { c: b.c } : null; }, 'Önden');
+}
+function viewRight(cubes, rows) {
+  const best = {};
+  cubes.forEach(c => { const k = c.z + ',' + c.y; if (!best[k] || c.x > best[k].x) best[k] = c; });
+  return gridSVG(N, rows, (r, c) => { const b = best[(N - 1 - c) + ',' + (rows - 1 - r)]; return b ? { c: b.c } : null; }, 'Sağdan');
+}
+const threeViews = t => '<div class="views">' + viewTop(t.cubes, 'Üstten') + viewFront(t.cubes, Math.max(1, t.maxH)) + viewRight(t.cubes, Math.max(1, t.maxH)) + '</div>';
+
+/* ===================== Görev metinleri ===================== */
+const hideCubes = t => t.skill === 'gorunus' && t.variant === 'kur';
+function promptOf(t) {
+  if (t.prompt) return t.prompt;
+  switch (t.skill) {
+    case 'yapi': return t.level === 1 ? 'Ekrandaki yapıyı tahtanda küplerle kur.' : t.level === 2 ? 'Yapıyı tahtanda kur. Kaç küp kullandın?' : 'Yapıyı kur. Toplam kaç küp kullandın? En yüksek kule kaç katman?';
+    case 'dondurme': return 'Yapıyı yukarıdan bakınca saat yönünde ' + (t.k * 90) + '° çevir (' + t.k + ' çeyrek tur). Yeni halini tahtanda kur.';
+    case 'katman': return 'Yapı kaç katman yüksekliğinde? Her katmanda kaç küp var? Katman çubuğuyla kontrol et.';
+    case 'gizli': return 'Köşeden bakınca bazı küpler görünmüyor. Toplam kaç küp var? Kaç küp gizli?';
+    case 'gorunus': return t.variant === 'cizim' ? 'Yapıya üstten, önden ve sağdan bakınca ne görürsün? Kareli kâğıda çiz.' : 'Üç görünüş verildi. Üstten görünüşteki sayı, o karedeki kulenin yüksekliğidir. Yapıyı kur.';
+    case 'parca': return 'Bu yapı ' + t.parts + ' renkli parçadan oluşuyor. Her parçada kaç küp var? Parçaları ayrı ayrı kur.';
+  }
+  return '';
+}
+function hintOf(t) {
+  if (t.hint) return t.hint;
+  switch (t.skill) {
+    case 'yapi': return 'Üstten bakınca her karedeki sayı, o karedeki kulenin yüksekliğidir.';
+    case 'dondurme': return 'Önce yapıyı bu haliyle kur, sonra tahtayı saat yönünde çevir. Üstten görünüş aşağıda.';
+    case 'katman': return 'Önce en alttaki katmanı kur, sonra ikinci katmanı üstüne ekle.';
+    case 'gizli': return 'Önce üstten ve yan yüzlerden görünen küpleri say, sonra toplamdan çıkar.';
+    case 'gorunus': return t.variant === 'cizim' ? 'Üstten görünüşte her kareye kulenin yüksekliğini yaz.' : 'Önce üstten görünüşteki sayılara göre kuleleri dik, sonra önden ve sağdan kontrol et.';
+    case 'parca': return 'Aynı renkteki küpler aynı parçadır.';
+  }
+  return '';
+}
+function answerOf(t) {
+  switch (t.skill) {
+    case 'yapi': return 'Toplam <b>' + t.T + '</b> küp. En yüksek kule <b>' + t.maxH + '</b> katman. Tabanda <b>' + t.foot + '</b> kare kullanılıyor.';
+    case 'dondurme': return 'Yapı saat yönünde <b>' + (t.k * 90) + '°</b> döndü. Başlangıç ve döndürülmüş üstten görünüşler aşağıda.';
+    case 'katman': return 'Yapı <b>' + t.maxH + '</b> katman yüksekliğinde. ' + layerCounts(t).map((n, i) => (i + 1) + '. katman <b>' + n + '</b> küp').join(' · ') + '.';
+    case 'gizli': { const v = t.vis.size; return 'Toplam <b>' + t.T + '</b> küp, görünen <b>' + v + '</b>, gizli <b>' + (t.T - v) + '</b>. Soluk küpler görünenler, renkli küpler gizli olanlar. Bir yüzünün görünen kısmı olan küp görünür sayılır.'; }
+    case 'gorunus': return t.variant === 'cizim' ? 'Üstten, önden ve sağdan görünüşler aşağıda.' : 'Yapı ekranda. Toplam <b>' + t.T + '</b> küp.';
+    case 'parca': {
+      const cnt = Array(t.parts).fill(0), pc = []; t.cubes.forEach(c => { cnt[c.p]++; pc[c.p] = c.c; });
+      return 'Yapı <b>' + t.parts + '</b> parçadan oluşuyor: ' + cnt.map((n, i) => '<span class="dot" style="background:' + COLORS[pc[i]] + '"></span>' + CNAMES[pc[i]] + ' parça <b>' + n + '</b> küp').join(' · ') + '.';
+    }
+  }
+  return '';
+}
+function viewsOf(t, hint, rev) {
+  switch (t.skill) {
+    case 'yapi': return hint || rev ? '<div class="views">' + viewTop(t.cubes, 'Üstten') + '</div>' : '';
+    case 'dondurme':
+      if (rev) return '<div class="views">' + viewTop(t.cubes, 'Başlangıç') + viewTop(rotCubes(t.cubes, t.k), 'Döndürülmüş') + '</div>';
+      return hint ? '<div class="views">' + viewTop(t.cubes, 'Başlangıç') + '</div>' : '';
+    case 'gorunus': return t.variant === 'kur' || rev ? threeViews(t) : '';
+  }
+  return '';
+}
+
+/* ===================== Veri ===================== */
+const LS_KEY = 'birimkup.v1';
+let storageOk = true;
+function seedDB() {
+  const rng = mulberry32(7);
+  const names = ['Elif Y.', 'Mert K.', 'Zeynep A.', 'Ali Can D.', 'Defne S.', 'Kerem T.', 'Ece B.', 'Yusuf M.'];
+  const students = names.map((n, i) => ({ id: 's' + (i + 1), name: n }));
+  const results = []; const today = new Date();
+  students.forEach(s => {
+    const base = 0.45 + rng() * 0.4;
+    SKILLS.forEach(sk => {
+      const ability = Math.max(0.15, Math.min(0.95, base + (rng() - 0.5) * 0.3 - (sk.key === 'gizli' ? 0.14 : 0)));
+      const n = 3 + ri(rng, 0, 3);
+      for (let j = 0; j < n; j++) {
+        const wk = ri(rng, 0, 6);
+        const p = ability + (6 - wk) * 0.012 - 0.03;
+        const pd = Math.max(0.05, Math.min(0.92, p - 0.1)), r = rng();
+        const outcome = r < pd ? 'd' : r < pd + 0.2 ? 'y' : 'x';
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (wk * 7 + ri(rng, 0, 4)));
+        const level = ri(rng, 1, 2);
+        results.push({ id: 'r' + results.length, studentId: s.id, classId: 'c1', taskId: sk.key + '.' + level + '.' + ri(rng, 1, BANK), skill: sk.key, level, outcome, day: dayStr(d) });
+      }
+    });
+  });
+  return { v: 1, classes: [{ id: 'c1', name: '3-A', demo: true, students }], results, active: 'c1', tasks: {}, works: [] };
+}
+function validDB(d) {
+  return d && Array.isArray(d.classes) && Array.isArray(d.results) &&
+    d.classes.every(c => c && typeof c.id === 'string' && typeof c.name === 'string' && Array.isArray(c.students) && c.students.every(s => s && typeof s.id === 'string' && typeof s.name === 'string')) &&
+    d.results.every(r => r && typeof r.studentId === 'string' && typeof r.skill === 'string' && SC[r.outcome] !== undefined && typeof r.day === 'string');
+}
+function loadDB() {
+  try { const s = localStorage.getItem(LS_KEY); if (s) { const d = JSON.parse(s); if (validDB(d)) return d; } } catch (e) { storageOk = false; }
+  return seedDB();
+}
+let DB = loadDB();
+if (!DB.tasks) DB.tasks = {};
+if (!DB.works) DB.works = [];
+function saveDB() { try { localStorage.setItem(LS_KEY, JSON.stringify(DB)); } catch (e) { storageOk = false; } if (typeof clQueue === 'function') clQueue(); }
+const uid = p => p + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
+const activeClass = () => DB.classes.find(c => c.id === DB.active) || DB.classes[0] || null;
+function agg(rs) { const o = {}; SKILLS.forEach(s => { o[s.key] = { n: 0, sc: 0 }; }); rs.forEach(r => { const a = o[r.skill]; if (a) { a.n++; a.sc += SC[r.outcome]; } }); return o; }
+const pct = a => a.n ? Math.round(a.sc / a.n * 100) : null;
+const cellCls = p => p == null ? 'none' : p >= 75 ? 'ok' : p >= 50 ? 'mid' : 'low';
+function weekly(rs) {
+  const w = Array.from({ length: 8 }, () => ({ n: 0, sc: 0 }));
+  rs.forEach(r => { const k = weeksAgo(r.day); if (k >= 0 && k < 8) { w[k].n++; w[k].sc += SC[r.outcome]; } });
+  return w.map(a => a.n ? Math.round(a.sc / a.n * 100) : null).reverse();
+}
+function chartWeeks(vals) {
+  const W = 560, H = 190, L = 34, R = 8, T = 16, B = 26, iw = W - L - R, ih = H - T - B, bw = iw / 8;
+  let g = '';
+  [0, 50, 100].forEach(v => { const y = T + ih - ih * v / 100; g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" style="stroke:var(--line)" stroke-dasharray="' + (v === 0 ? '0' : '3 3') + '"/><text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">%' + v + '</text>'; });
+  vals.forEach((v, i) => {
+    const x = L + i * bw + bw * 0.18, w = bw * 0.64, lbl = i === 7 ? 'Bu hafta' : (7 - i) + ' hf önce';
+    if (v != null) { const bh = Math.max(2, ih * v / 100); g += '<rect x="' + x + '" y="' + (T + ih - bh) + '" width="' + w + '" height="' + bh + '" rx="4" style="fill:var(--accent)"/><text class="val" x="' + (x + w / 2) + '" y="' + (T + ih - bh - 4) + '" text-anchor="middle">%' + v + '</text>'; }
+    g += '<text x="' + (x + w / 2) + '" y="' + (H - 8) + '" text-anchor="middle">' + lbl + '</text>';
+  });
+  return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Haftalık başarı grafiği">' + g + '</svg>';
+}
+
+/* ===================== Arayüz durumu ===================== */
+const UI = { page: 'gorevler', skill: 'all', level: 0, generated: [], student: null, confirm: '', restoreOpen: false, backupOpen: false, backupText: '' };
+const app = () => document.getElementById('app');
+function taskIds() {
+  const skills = UI.skill === 'all' ? SKILLS.map(s => s.key) : [UI.skill];
+  const levels = UI.level ? [UI.level] : [1, 2, 3];
+  const ids = [];
+  skills.forEach(s => levels.forEach(l => { for (let i = 1; i <= BANK; i++) ids.push(s + '.' + l + '.' + i); }));
+  const gen = UI.generated.filter(id => { const p = parseId(id); return skills.includes(p.skill) && levels.includes(p.level); });
+  const known = new Set(ids.concat(gen));
+  const cust = Object.keys(DB.tasks || {}).filter(id => !known.has(id) && skills.includes(DB.tasks[id].skill) && levels.includes(DB.tasks[id].level));
+  return cust.concat(gen, ids);
+}
+const taskLabel = id => { const d = DB.tasks && DB.tasks[id]; if (d && d.title) return d.title; return SKILL_BY[parseId(id).skill].name; };
+
+/* ----- Görevler ----- */
+function pageTasks() {
+  const ids = taskIds();
+  const skillChips = [{ key: 'all', name: 'Tümü' }].concat(SKILLS).map(s => '<button class="chip" data-act="fskill" data-v="' + s.key + '" aria-pressed="' + (UI.skill === s.key) + '">' + esc(s.key === 'all' ? s.name : s.short) + '</button>').join('');
+  const levelChips = [{ n: 0, t: 'Tümü' }].concat(LEVELS.map(l => ({ n: l.n, t: l.n + ' · ' + l.age }))).map(l => '<button class="chip" data-act="flevel" data-v="' + l.n + '" aria-pressed="' + (UI.level === l.n) + '">' + l.t + '</button>').join('');
+  const cards = ids.map(id => {
+    const p = parseId(id), t = getTask(id), L = LEVELS[t.level - 1], cd = DB.tasks && DB.tasks[id];
+    return '<article class="task" data-act="present" data-id="' + id + '" tabindex="0" aria-label="' + esc(taskLabel(id)) + ' sunumunu aç">' +
+      '<div class="thumb"><canvas data-thumb="' + id + '"></canvas></div>' +
+      '<div class="meta"><div class="t-skill">' + esc(taskLabel(id)) + '</div>' +
+      '<div class="t-sub"><span class="pill l' + t.level + '">Seviye ' + t.level + ' · ' + L.age + '</span><span>' + t.T + ' küp</span>' + (cd ? '<span class="pill demo">' + (p.seed > 0 && p.seed <= BANK ? 'Düzenlendi' : 'Özel') + '</span>' : p.seed > BANK ? '<span class="pill demo">Yeni</span>' : '') + '</div>' +
+      '<div class="chips" style="margin-top:auto"><button class="btn small primary" data-act="present" data-id="' + id + '">Sun</button><button class="btn small" data-act="edit" data-id="' + id + '">Düzenle</button></div></div></article>';
+  }).join('');
+  return '<header class="page-head"><h1>Görevler</h1><p>Bir görev seçin, projeksiyonda sunun, çocuklar küplerle çözerken sonucu işaretleyin. Her seviye için ' + BANK + ' hazır görev vardır; istediğiniz kadar yenisini üretebilirsiniz.</p></header>' +
+    '<div class="filters"><div class="row"><span class="lbl">Beceri</span><div class="chips">' + skillChips + '</div></div>' +
+    '<div class="row"><span class="lbl">Seviye</span><div class="chips">' + levelChips + '</div><button class="btn small" data-act="newtask" style="margin-left:auto">Yeni görev üret</button></div></div>' +
+    '<div class="grid">' + cards + '</div>';
+}
+function drawThumbs() {
+  document.querySelectorAll('canvas[data-thumb]').forEach(cv => { try { drawThumb(cv, getTask(cv.dataset.thumb)); } catch (e) { } });
+}
+
+/* ----- Sınıflar ----- */
+function pageClasses() {
+  const cur = activeClass();
+  const list = DB.classes.map(c => '<li><button class="class-item" data-act="pickclass" data-id="' + c.id + '" aria-current="' + (cur && cur.id === c.id) + '"><span>' + esc(c.name) + (c.demo ? ' <span class="pill demo">Örnek</span>' : '') + '</span><small>' + c.students.length + ' öğrenci</small></button></li>').join('');
+  let right = '<div class="empty">Henüz sınıf yok. Soldan bir sınıf ekleyin.</div>';
+  if (cur) {
+    const stu = cur.students.map(s => '<li class="stu"><span class="nm">' + esc(s.name) + '</span><button class="btn small danger" data-act="delstu" data-id="' + s.id + '">' + (UI.confirm === 'stu:' + s.id ? 'Sil, emin misiniz?' : 'Sil') + '</button></li>').join('');
+    right = '<h2>' + esc(cur.name) + ' · Öğrenciler</h2>' +
+      (cur.demo ? '<div class="banner">Bu sınıf örnek veridir. Kendi sınıfınızı ekledikten sonra örnek sınıfı silebilirsiniz.</div>' : '') +
+      '<ul class="list">' + (stu || '<li class="muted">Bu sınıfta öğrenci yok.</li>') + '</ul>' +
+      '<form class="inline-form" data-form="addstu"><input type="text" id="stuName" placeholder="Öğrenci adı" aria-label="Öğrenci adı" maxlength="60"><button class="btn primary" type="submit">Öğrenci ekle</button></form>' +
+      '<details><summary>Listeden toplu ekle</summary><p class="note">Her satıra bir öğrenci yazın.</p><textarea id="stuBulk" placeholder="Ayşe Y.&#10;Mehmet K."></textarea><button class="btn" data-act="bulk">Listeyi ekle</button></details>' +
+      '<div style="margin-top:18px"><button class="btn danger small" data-act="delclass">' + (UI.confirm === 'cls:' + cur.id ? 'Sınıfı sil, emin misiniz?' : 'Sınıfı sil') + '</button></div>';
+  }
+  const backup = '<section class="panel"><h2>Yedek</h2><p class="note">' + (storageOk ? 'Veriler yalnızca bu tarayıcıda saklanır. Başka bir bilgisayara taşımak veya güvene almak için yedek alın.' : 'Bu tarayıcı kayıt tutmuyor. Çalışmanızı kaybetmemek için yedek alın.') + '</p>' +
+    '<div class="chips" style="margin-top:12px"><button class="btn" data-act="backup">Yedeği göster</button><button class="btn" data-act="restoreopen">Yedekten yükle</button></div>' +
+    (UI.backupOpen ? '<div style="margin-top:12px"><textarea id="backupText" readonly aria-label="Yedek metni">' + esc(UI.backupText) + '</textarea><button class="btn small" data-act="copybackup" style="margin-top:8px">Kopyala</button> <span class="note" id="copyMsg"></span></div>' : '') +
+    (UI.restoreOpen ? '<div style="margin-top:12px"><p class="note">Yedek metnini yapıştırın veya dosya seçin.</p><textarea id="restoreText" aria-label="Yüklenecek yedek"></textarea><div class="chips" style="margin-top:8px"><input type="file" id="restoreFile" accept=".json,application/json"><button class="btn danger" data-act="restore">' + (UI.confirm === 'restore' ? 'Mevcut veriler silinecek. Onaylıyorum' : 'Yükle') + '</button></div><p class="note" id="restoreMsg"></p></div>' : '') + '</section>';
+  return '<header class="page-head"><h1>Sınıflar</h1><p>Sınıflarınızı ve öğrencilerinizi buradan yönetin. Sunum sırasında sonuçlar etkin sınıf için kaydedilir.</p></header>' +
+    '<div class="stack"><div class="two"><section class="panel"><h2>Sınıflarım</h2><ul class="list">' + (list || '<li class="muted">Sınıf yok.</li>') + '</ul>' +
+    '<form class="inline-form" data-form="addclass"><input type="text" id="className" placeholder="Sınıf adı (ör. 2-B)" aria-label="Sınıf adı" maxlength="40"><button class="btn primary" type="submit">Sınıf ekle</button></form></section>' +
+    '<section class="panel">' + right + '</section></div>' + backup + '</div>';
+}
+
+/* ----- Gelişim ----- */
+function pageProgress() {
+  const cur = activeClass();
+  const head = '<header class="page-head"><h1>Gelişim</h1><p>Beceri başına başarı: Doğru 1 puan, Yardımla yarım puan, Yanlış 0 puan sayılır.</p></header>';
+  if (!cur) return head + '<div class="empty">Önce Sınıflar sayfasından bir sınıf ekleyin.</div>';
+  const sel = '<div class="eval-head" style="margin-bottom:16px"><label for="gClass" class="muted">Sınıf</label><select id="gClass">' + DB.classes.map(c => '<option value="' + c.id + '"' + (c.id === cur.id ? ' selected' : '') + '>' + esc(c.name) + (c.demo ? ' (örnek)' : '') + '</option>').join('') + '</select></div>';
+  const ids = new Set(cur.students.map(s => s.id));
+  const rs = DB.results.filter(r => ids.has(r.studentId));
+  if (!rs.length) return head + sel + '<div class="empty">Bu sınıf için henüz sonuç yok. Bir görevi sunarken öğrencileri işaretleyin.</div>';
+  const classAgg = agg(rs);
+  let weakest = null;
+  SKILLS.forEach(s => { const a = classAgg[s.key]; if (a.n >= 3) { const p = pct(a); if (weakest === null || p < weakest.p) weakest = { s, p }; } });
+  const insight = weakest && weakest.p < 75 ? '<div class="insight">Sınıfta en çok zorlanılan beceri <b>' + esc(weakest.s.name) + '</b> (%' + weakest.p + '). Bu beceri için bir alt seviyeden görevlerle başlayabilirsiniz.</div>' : '';
+  const rows = cur.students.map(s => {
+    const a = agg(rs.filter(r => r.studentId === s.id)), all = Object.values(a).reduce((x, y) => ({ n: x.n + y.n, sc: x.sc + y.sc }), { n: 0, sc: 0 });
+    return '<tr data-act="pickstu" data-id="' + s.id + '" aria-selected="' + (UI.student === s.id) + '" tabindex="0"><td>' + esc(s.name) + '</td>' +
+      SKILLS.map(k => { const p = pct(a[k.key]); return '<td>' + (p == null ? '<span class="cell none">—</span>' : '<span class="cell ' + cellCls(p) + '">%' + p + '<small>' + a[k.key].n + ' görev</small></span>') + '</td>'; }).join('') +
+      '<td><span class="cell ' + cellCls(pct(all)) + '">' + (all.n ? '%' + pct(all) : '—') + '</span></td></tr>';
+  }).join('');
+  const all = Object.values(classAgg).reduce((x, y) => ({ n: x.n + y.n, sc: x.sc + y.sc }), { n: 0, sc: 0 });
+  const foot = '<tr><td>Sınıf ortalaması</td>' + SKILLS.map(k => { const p = pct(classAgg[k.key]); return '<td>' + (p == null ? '—' : '%' + p) + '</td>'; }).join('') + '<td>' + (all.n ? '%' + pct(all) : '—') + '</td></tr>';
+  const table = '<div class="tablewrap"><table><thead><tr><th>Öğrenci</th>' + SKILLS.map(k => '<th>' + k.short + '</th>').join('') + '<th>Genel</th></tr></thead><tbody>' + rows + '</tbody><tfoot>' + foot + '</tfoot></table></div>';
+  const stu = cur.students.find(s => s.id === UI.student);
+  const srs = stu ? rs.filter(r => r.studentId === stu.id) : rs;
+  const sa = agg(srs);
+  const bars = SKILLS.map(k => { const p = pct(sa[k.key]); return '<div class="bar"><span>' + k.name + '</span><div class="track"><div class="fill" style="width:' + (p || 0) + '%"></div></div><span class="val">' + (p == null ? '—' : '%' + p) + ' <small>(' + sa[k.key].n + ')</small></span></div>'; }).join('');
+  const recent = stu ? srs.slice().sort((a, b) => a.day < b.day ? 1 : a.day > b.day ? -1 : 0).slice(0, 8).map(r => '<li><span>' + fmtDay(r.day) + ' · ' + esc(SKILL_BY[r.skill] ? SKILL_BY[r.skill].short : r.skill) + ' · Seviye ' + (r.level || '') + '</span><span class="out ' + r.outcome + '">' + OUTL[r.outcome] + '</span></li>').join('') : '';
+  const detail = '<div class="detail"><section class="panel"><h2>' + (stu ? esc(stu.name) + ' · Beceriler' : 'Sınıf · Beceriler') + '</h2><div class="bars">' + bars + '</div>' + (stu ? '' : '<p class="note" style="margin-top:12px">Bir öğrenciye tıklayarak kişisel gelişimi görün.</p>') + '</section>' +
+    '<section class="panel"><h2>' + (stu ? esc(stu.name) : 'Sınıf') + ' · Haftalık ortalama</h2>' + chartWeeks(weekly(srs)) + (stu ? '<h3 style="font-size:15px;margin:16px 0 6px">Son sonuçlar</h3><ul class="recent">' + recent + '</ul>' : '') + '</section></div>';
+  return head + sel + insight + table + detail;
+}
+
+/* ===================== Yönlendirme ve olaylar ===================== */
+function render() {
+  document.querySelectorAll('[data-nav]').forEach(a => a.setAttribute('aria-current', a.dataset.nav === UI.page ? 'page' : 'false'));
+  const a = app();
+  a.classList.toggle('wide', UI.page === 'tahta');
+  edLeave();
+  document.body.classList.toggle('kiosk', UI.page === 'giris');
+  if (UI.page === 'tahta') { a.innerHTML = edPage(); edMount(); return; }
+  if (UI.page === 'ogrenci') { a.innerHTML = stuTeacherPage(); return; }
+  if (UI.page === 'giris') { a.innerHTML = stuEntryPage(); return; }
+  if (UI.page === 'rapor') { a.innerHTML = pageReport(); return; }
+  if (UI.page === 'hesap') { a.innerHTML = hesapPage(); return; }
+  a.innerHTML = UI.page === 'siniflar' ? pageClasses() : UI.page === 'gelisim' ? pageProgress() : pageTasks();
+  if (UI.page === 'gorevler') requestAnimationFrame(drawThumbs);
+}
+function route() {
+  const h = (location.hash || '#tahta').slice(1);
+  UI.page = ['tahta', 'gorevler', 'ogrenci', 'giris', 'siniflar', 'gelisim', 'rapor', 'hesap'].includes(h) ? h : 'tahta';
+  UI.confirm = '';
+  render();
+  window.scrollTo(0, 0);
+}
+function newTaskId() {
+  const skill = UI.skill === 'all' ? SKILLS[Math.floor(Math.random() * SKILLS.length)].key : UI.skill;
+  const level = UI.level || (1 + Math.floor(Math.random() * 3));
+  return skill + '.' + level + '.' + (100 + Math.floor(Math.random() * 90000));
+}
+function addStudents(names) {
+  const cur = activeClass(); if (!cur) return 0;
+  let n = 0;
+  names.map(s => s.trim()).filter(Boolean).forEach(nm => { cur.students.push({ id: uid('s'), name: nm.slice(0, 60) }); n++; });
+  if (n) saveDB();
+  return n;
+}
+document.addEventListener('submit', e => {
+  const f = e.target.closest('[data-form]'); if (!f) return;
+  e.preventDefault();
+  if (f.dataset.form === 'addclass') {
+    const v = document.getElementById('className').value.trim(); if (!v) return;
+    const c = { id: uid('c'), name: v.slice(0, 40), students: [] }; DB.classes.push(c); DB.active = c.id; saveDB(); render();
+    const i = document.getElementById('stuName'); if (i) i.focus();
+  } else if (f.dataset.form === 'addstu') {
+    const v = document.getElementById('stuName').value; if (addStudents([v])) { render(); const i = document.getElementById('stuName'); if (i) i.focus(); }
+  }
+});
+document.addEventListener('change', e => {
+  if (e.target.id === 'gClass') { DB.active = e.target.value; UI.student = null; saveDB(); render(); }
+  else if (e.target.id === 'evClass') { DB.active = e.target.value; saveDB(); renderEval(); }
+  else if (e.target.id === 'restoreFile') {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const rd = new FileReader(); rd.onload = () => { document.getElementById('restoreText').value = String(rd.result || ''); }; rd.readAsText(f);
+  }
+});
+document.getElementById('app').addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const act = t.dataset.act, id = t.dataset.id, v = t.dataset.v;
+  if (act === 'fskill') { UI.skill = v; render(); }
+  else if (act === 'flevel') { UI.level = +v; render(); }
+  else if (act === 'newtask') { const nid = newTaskId(); UI.generated.unshift(nid); render(); const ids = taskIds(); openPres(ids, Math.max(0, ids.indexOf(nid)), t); }
+  else if (act === 'edit') { edOpenTask(id); location.hash = '#tahta'; if (UI.page === 'tahta') render(); }
+  else if (act === 'present') { const ids = taskIds(); openPres(ids, Math.max(0, ids.indexOf(id)), t); }
+  else if (act === 'pickclass') { DB.active = id; saveDB(); UI.confirm = ''; render(); }
+  else if (act === 'delstu') {
+    if (UI.confirm === 'stu:' + id) { const c = activeClass(); c.students = c.students.filter(s => s.id !== id); DB.results = DB.results.filter(r => r.studentId !== id); UI.confirm = ''; saveDB(); }
+    else UI.confirm = 'stu:' + id;
+    render();
+  }
+  else if (act === 'delclass') {
+    const c = activeClass();
+    if (UI.confirm === 'cls:' + c.id) { DB.classes = DB.classes.filter(x => x.id !== c.id); DB.results = DB.results.filter(r => r.classId !== c.id); DB.active = DB.classes[0] ? DB.classes[0].id : null; UI.confirm = ''; UI.student = null; saveDB(); }
+    else UI.confirm = 'cls:' + c.id;
+    render();
+  }
+  else if (act === 'bulk') { const ta = document.getElementById('stuBulk'); if (addStudents(ta.value.split('\n'))) render(); }
+  else if (act === 'pickstu') { UI.student = UI.student === id ? null : id; render(); }
+  else if (act === 'backup') { UI.backupOpen = !UI.backupOpen; UI.backupText = JSON.stringify(DB); render(); }
+  else if (act === 'restoreopen') { UI.restoreOpen = !UI.restoreOpen; UI.confirm = ''; render(); }
+  else if (act === 'copybackup') {
+    const ta = document.getElementById('backupText'), msg = document.getElementById('copyMsg');
+    const fallback = () => { ta.focus(); ta.select(); if (msg) msg.textContent = 'Metin seçildi. Ctrl+C ile kopyalayın.'; };
+    try { navigator.clipboard.writeText(UI.backupText).then(() => { if (msg) msg.textContent = 'Kopyalandı.'; }, fallback); } catch (err) { fallback(); }
+  }
+  else if (act === 'restore') {
+    const txt = document.getElementById('restoreText').value, msg = document.getElementById('restoreMsg');
+    let d = null; try { d = JSON.parse(txt); } catch (err) { }
+    if (!validDB(d)) { msg.textContent = 'Yedek okunamadı. Yedek metninin tamamını yapıştırdığınızdan emin olun.'; return; }
+    if (UI.confirm !== 'restore') { UI.confirm = 'restore'; render(); document.getElementById('restoreText').value = txt; return; }
+    DB = d; if (!DB.tasks) DB.tasks = {}; if (!DB.works) DB.works = []; taskCache.clear();
+    if (!DB.active || !DB.classes.some(c => c.id === DB.active)) DB.active = DB.classes[0] ? DB.classes[0].id : null;
+    UI.confirm = ''; UI.restoreOpen = false; UI.student = null; saveDB(); render();
+  }
+});
+document.getElementById('app').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const t = e.target.closest('[data-act="present"],[data-act="pickstu"]');
+  if (t && t === e.target) { e.preventDefault(); t.click(); }
+});
+
+/* ===================== Sunum modu ===================== */
+const P = { ids: [], i: 0, rev: false, hint: false, layer: 1, t: null, viewer: null, back: null };
+const $ = id => document.getElementById(id);
+function ensureViewer() { if (!P.viewer) P.viewer = new Viewer($('pcv'), true); return P.viewer; }
+function openPres(ids, i, from) {
+  P.ids = ids; P.i = i; P.back = from || null;
+  $('pres').hidden = false; $('pres').classList.remove('clean'); $('pShow').hidden = true;
+  document.documentElement.classList.add('pres-open');
+  const v = ensureViewer(); v.resize();
+  setTask();
+  const cl = $('pres').querySelector('[data-act="close"]'); if (cl) cl.focus();
+}
+function closePres() {
+  $('pres').hidden = true; document.documentElement.classList.remove('pres-open');
+  if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => { });
+  if (P.back && document.contains(P.back)) P.back.focus();
+  if (UI.page === 'gelisim') render();
+}
+function setTask() {
+  const t = getTask(P.ids[P.i]); P.t = t; P.rev = false; P.hint = false; P.layer = t.maxH;
+  const v = ensureViewer();
+  v.st = { cubes: hideCubes(t) ? [] : t.cubes, yaw: 0, explode: 0, offsets: t.offsets, maxLayer: t.skill === 'katman' ? t.maxH : null, dim: null };
+  Object.keys(v.tok).forEach(k => { v.tok[k]++; });
+  v.goCam({ a: DEF_CAM.a, e: DEF_CAM.e, zoom: 1.1 }, 450);
+  v.draw();
+  $('pCount').textContent = (P.i + 1) + ' / ' + P.ids.length;
+  renderPanel();
+}
+function stepTask(d) { const n = P.i + d; if (n < 0 || n >= P.ids.length) return; P.i = n; setTask(); $('sideBody').scrollTop = 0; }
+function renderPanel() {
+  const t = P.t, L = LEVELS[t.level - 1];
+  const note = $('stageNote');
+  if (hideCubes(t) && !P.rev) { note.hidden = false; note.textContent = 'Yapı gizli. Üç görünüşe bakarak kurun.'; } else note.hidden = true;
+  const layer = t.skill === 'katman' ? '<div class="layerbox"><label for="pLayer">Gösterilen katman: <span id="pLayerVal">' + P.layer + ' / ' + t.maxH + '</span></label><input type="range" id="pLayer" min="1" max="' + t.maxH + '" value="' + P.layer + '"></div>' : '';
+  $('sideBody').innerHTML =
+    '<div class="p-meta"><span class="pill l' + t.level + '">Seviye ' + t.level + ' · ' + L.age + '</span><span>' + esc(SKILL_BY[t.skill].name) + '</span><span>' + t.T + ' küp</span></div>' +
+    '<h2 class="p-prompt">' + esc(promptOf(t)) + '</h2>' + layer +
+    '<div class="p-actions"><button class="btn" data-act="hint">' + (P.hint ? 'İpucunu gizle' : 'İpucu') + '</button><button class="btn primary" data-act="reveal">' + (P.rev ? 'Cevabı gizle' : 'Cevabı göster') + '</button><button class="btn" data-act="editHere">Düzenle</button></div>' +
+    (P.hint ? '<div class="hintbox">' + esc(hintOf(t)) + '</div>' : '') +
+    viewsOf(t, P.hint, P.rev) +
+    (P.rev ? '<div class="answer">' + answerOf(t) + '</div>' : '') +
+    '<section class="evalbox" id="evalBox"></section>';
+  renderEval();
+}
+function renderEval() {
+  const box = $('evalBox'); if (!box) return;
+  const cls = activeClass();
+  if (!cls) { box.innerHTML = '<h3>Değerlendir</h3><p class="note">Sonuçları kaydetmek için önce bir sınıf ekleyin.</p><a class="btn small" href="#siniflar" data-act="toClasses">Sınıf ekle</a>'; return; }
+  const day = dayStr(new Date());
+  const marked = cls.students.filter(s => DB.results.some(r => r.studentId === s.id && r.taskId === P.t.id && r.day === day)).length;
+  const rows = cls.students.map(s => {
+    const r = DB.results.find(r => r.studentId === s.id && r.taskId === P.t.id && r.day === day), cur = r ? r.outcome : '';
+    return '<li><span class="nm">' + esc(s.name) + '</span><span class="seg" role="group" aria-label="' + esc(s.name) + ' sonucu">' + ['d', 'y', 'x'].map(o => '<button class="o-' + o + '" data-act="mark" data-s="' + s.id + '" data-o="' + o + '" aria-pressed="' + (cur === o) + '">' + OUTL[o] + '</button>').join('') + '</span></li>';
+  }).join('');
+  box.innerHTML = '<div class="eval-head"><h3>Değerlendir</h3><select id="evClass" aria-label="Sınıf">' + DB.classes.map(c => '<option value="' + c.id + '"' + (c.id === cls.id ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('') + '</select></div>' +
+    '<p class="note">Bugün işaretlenen: ' + marked + ' / ' + cls.students.length + '</p><ul class="eval-list">' + (rows || '<li class="muted">Bu sınıfta öğrenci yok.</li>') + '</ul>';
+}
+function reveal(on) {
+  const t = P.t, v = ensureViewer(); P.rev = on;
+  if (t.skill === 'dondurme') v.anim('yaw', () => v.st.yaw, x => { v.st.yaw = x; }, on ? t.k * Math.PI / 2 : 0, 1400);
+  else if (t.skill === 'parca') v.anim('explode', () => v.st.explode, x => { v.st.explode = x; }, on ? 1 : 0, 1100);
+  else if (t.skill === 'gizli') { v.st.dim = on ? t.vis : null; if (on) v.goCam({ a: DEF_CAM.a, e: DEF_CAM.e }, 500); v.draw(); }
+  else if (t.skill === 'gorunus' && t.variant === 'kur') { v.st.cubes = on ? t.cubes : []; v.draw(); }
+  else if (t.skill === 'katman' && on) { P.layer = t.maxH; v.st.maxLayer = P.layer; v.draw(); }
+  renderPanel();
+}
+$('pres').addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const act = t.dataset.act, v = ensureViewer();
+  if (act === 'close') closePres();
+  else if (act === 'prev') stepTask(-1);
+  else if (act === 'next') stepTask(1);
+  else if (act === 'hint') { P.hint = !P.hint; renderPanel(); }
+  else if (act === 'reveal') reveal(!P.rev);
+  else if (act === 'cam') {
+    const m = { corner: { a: DEF_CAM.a, e: DEF_CAM.e }, top: { a: 0, e: Math.PI / 2 }, front: { a: 0, e: 0 }, right: { a: -Math.PI / 2, e: 0 } };
+    v.goCam(m[t.dataset.v], 450);
+  }
+  else if (act === 'zoom') { v.cam.zoom = Math.max(0.5, Math.min(2.6, v.cam.zoom * (+t.dataset.d > 0 ? 1.15 : 0.87))); v.draw(); }
+  else if (act === 'panel') { const c = $('pres').classList.toggle('clean'); $('pShow').hidden = !c; setTimeout(() => v.resize(), 30); }
+  else if (act === 'full') { const el = $('pres'); if (document.fullscreenElement) document.exitFullscreen().catch(() => { }); else if (el.requestFullscreen) el.requestFullscreen().catch(() => { }); }
+  else if (act === 'mark') {
+    const sid = t.dataset.s, o = t.dataset.o, day = dayStr(new Date()), cls = activeClass();
+    const i = DB.results.findIndex(r => r.studentId === sid && r.taskId === P.t.id && r.day === day);
+    if (i >= 0 && DB.results[i].outcome === o) DB.results.splice(i, 1);
+    else if (i >= 0) DB.results[i].outcome = o;
+    else DB.results.push({ id: uid('r'), studentId: sid, classId: cls.id, taskId: P.t.id, skill: P.t.skill, level: P.t.level, outcome: o, day });
+    saveDB(); renderEval();
+  }
+  else if (act === 'toClasses') { closePres(); }
+  else if (act === 'editHere') { const tid = P.t.id; closePres(); edOpenTask(tid); if (location.hash === '#tahta') render(); else location.hash = '#tahta'; }
+});
+$('pres').addEventListener('input', e => {
+  if (e.target.id === 'pLayer') {
+    P.layer = +e.target.value; const v = ensureViewer(); v.st.maxLayer = P.layer; v.draw();
+    const lab = $('pLayerVal'); if (lab) lab.textContent = P.layer + ' / ' + P.t.maxH;
+  }
+});
+document.addEventListener('keydown', e => {
+  if ($('pres').hidden) return;
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (e.key === 'Escape') { closePres(); return; }
+  if (tag === 'input' || tag === 'select' || tag === 'textarea') return;
+  if (e.key === 'ArrowRight') stepTask(1);
+  else if (e.key === 'ArrowLeft') stepTask(-1);
+  else if (e.key === ' ' && tag !== 'button') { e.preventDefault(); reveal(!P.rev); }
+});
+
+/* Tema değişince tuvalleri yeniden çiz */
+function redrawAll() { if (P.viewer) P.viewer.draw(); edRedraw(); if (PL.vA) PL.vA.draw(); if (PL.vB) PL.vB.draw(); if (UI.page === 'gorevler') drawThumbs(); }
+if (window.matchMedia) { const mq = matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', redrawAll); }
+new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+window.addEventListener('hashchange', route);
+stuMount(); clMount(); rpMount(); route(); clChipUpdate();
+clInit().then(() => { clChipUpdate(); if (clAuthed()) render(); });
+</script>
